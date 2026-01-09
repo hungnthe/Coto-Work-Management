@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  # Dịch vụ Database
+  postgres_db:
+    image: postgres:16-alpine # Dùng bản Alpine cho nhẹ (Lightweight)
+    container_name: task_management_db
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admin123
+      - POSTGRES_DB=quanly_nhiemvu_db
+    ports:
+      - "5432:5432" # Mở cổng để Spring Boot hoặc DBeaver kết nối vào
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data # Quan trọng: Để dữ liệu không bị mất khi tắt Docker
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql # Tự động tạo bảng khi chạy lần đầu
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
