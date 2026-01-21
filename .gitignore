@@ -1,0 +1,165 @@
+# ==================== DOCUMENTATION & SPECS ====================
+# Kiro documentation and specs
+.kiro/
+*.md
+README.md
+HELP.md
+API_TEST_POSTMAN.md
+QUICK_START.md
+SYSTEM_COMMANDS.md
+
+# ==================== TEST FILES ====================
+# Java test files
+**/src/test/
+**/*Test.java
+**/*Tests.java
+**/test/
+test-*.ps1
+test-*.sh
+
+# JavaScript test files
+**/*.test.js
+**/*.test.jsx
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.js
+**/*.spec.jsx
+**/*.spec.ts
+**/*.spec.tsx
+**/tests/
+**/test/
+**/__tests__/
+
+# ==================== BUILD & DEPENDENCIES ====================
+# Java/Maven
+**/target/
+**/.mvn/
+**/mvnw
+**/mvnw.cmd
+**/*.jar
+**/*.war
+**/*.ear
+**/*.class
+
+# Node.js
+**/node_modules/
+**/npm-debug.log*
+**/yarn-debug.log*
+**/yarn-error.log*
+**/package-lock.json
+**/yarn.lock
+
+# ==================== IDE & EDITOR ====================
+# VS Code
+**/.vscode/
+**/*.code-workspace
+
+# IntelliJ IDEA
+**/.idea/
+**/*.iml
+**/*.iws
+**/*.ipr
+
+# Eclipse
+**/.project
+**/.classpath
+**/.settings/
+
+# ==================== SYSTEM & TEMP FILES ====================
+# Windows
+**/Thumbs.db
+**/Desktop.ini
+**/*.tmp
+**/*.temp
+
+# macOS
+**/.DS_Store
+**/.AppleDouble
+**/.LSOverride
+
+# Linux
+**/*~
+
+# ==================== LOGS & DATA ====================
+# Log files
+**/*.log
+**/logs/
+**/log/
+
+# Database data
+**/postgres-data/
+**/mysql-data/
+**/data/
+**/*.db
+**/*.sqlite
+**/*.sqlite3
+
+# ==================== SCRIPTS & UTILITIES ====================
+# PowerShell scripts
+*.ps1
+# Shell scripts
+*.sh
+# Batch files
+*.bat
+*.cmd
+
+# ==================== DOCKER & DEPLOYMENT ====================
+# Docker
+**/Dockerfile
+**/docker-compose*.yml
+**/.dockerignore
+
+# ==================== CONFIGURATION ====================
+# Environment files
+**/.env
+**/.env.local
+**/.env.development
+**/.env.test
+**/.env.production
+
+# Application properties (keep templates)
+**/application-*.properties
+**/application-*.yml
+# But keep main config
+!**/application.properties
+!**/application.yml
+
+# ==================== MIGRATION & SEED DATA ====================
+# Database migration and seed data
+database-migration/
+**/migration*/
+**/seed*.sql
+**/init*.sql
+
+# ==================== INFRASTRUCTURE ====================
+# Infrastructure code
+infrastructure/
+
+# ==================== FRONTEND SPECIFIC ====================
+# Build outputs
+**/dist/
+**/build/
+**/.next/
+**/.nuxt/
+
+# Cache
+**/.cache/
+**/coverage/
+
+# ==================== BACKEND SPECIFIC ====================
+# Spring Boot
+**/HELP.md
+**/.gradle/
+**/gradle/
+**/gradlew
+**/gradlew.bat
+
+# ==================== KEEP ESSENTIAL FILES ====================
+# Force include essential files even if they match patterns above
+!pom.xml
+!package.json
+!**/src/main/**
+!**/public/**
+!**/resources/**/*.properties
+!**/resources/**/*.yml
+!**/resources/**/*.xml
