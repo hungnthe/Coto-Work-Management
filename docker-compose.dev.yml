@@ -1,0 +1,55 @@
+version: '3.8'
+
+# Development override for docker-compose.yml
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+services:
+  # Development API Gateway with hot reload
+  api-gateway:
+    build:
+      context: ./infrastructure/api-gateway
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./infrastructure/api-gateway/src:/app/src
+      - ./infrastructure/api-gateway/target:/app/target
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_DEVTOOLS_RESTART_ENABLED=true
+
+  # Development database with exposed ports
+  user_service_db:
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=user_service_db
+
+  # Development Redis with exposed port
+  redis:
+    ports:
+      - "6379:6379"
+
+  # Development RabbitMQ with management UI
+  rabbitmq:
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=dev
+      - RABBITMQ_DEFAULT_PASS=dev123
+
+  # Development Consul with UI
+  consul:
+    ports:
+      - "8500:8500"
+      - "8600:8600/udp"
+
+  # Development monitoring
+  prometheus:
+    ports:
+      - "9090:9090"
+
+  grafana:
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=dev123

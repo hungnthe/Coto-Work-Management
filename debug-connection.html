@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Backend Connection</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .info { background-color: #d1ecf1; color: #0c5460; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Debug Backend Connection</h1>
+    
+    <div>
+        <button onclick="testHealth()">Test Health</button>
+        <button onclick="testHello()">Test Hello</button>
+        <button onclick="testLogin()">Test Login</button>
+        <button onclick="clearResults()">Clear Results</button>
+    </div>
+    
+    <div id="results"></div>
+
+    <script>
+        const API_BASE = 'http://localhost:8083';
+        
+        function addResult(message, type = 'info') {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `result ${type}`;
+            div.innerHTML = `<strong>${new Date().toLocaleTimeString()}</strong>: ${message}`;
+            results.appendChild(div);
+            results.scrollTop = results.scrollHeight;
+        }
+        
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+        
+        async function testHealth() {
+            addResult('Testing health endpoint...', 'info');
+            try {
+                const response = await fetch(`${API_BASE}/actuator/health`);
+                const data = await response.json();
+                addResult(`Health check: ${response.status} - ${JSON.stringify(data, null, 2)}`, 'success');
+            } catch (error) {
+                addResult(`Health check failed: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testHello() {
+            addResult('Testing hello endpoint...', 'info');
+            try {
+                const response = await fetch(`${API_BASE}/hello`);
+                if (response.ok) {
+                    const data = await response.text();
+                    addResult(`Hello endpoint: ${response.status} - ${data}`, 'success');
+                } else {
+                    addResult(`Hello endpoint failed: ${response.status} ${response.statusText}`, 'error');
+                }
+            } catch (error) {
+                addResult(`Hello endpoint failed: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testLogin() {
+            addResult('Testing login endpoint...', 'info');
+            try {
+                const response = await fetch(`${API_BASE}/api/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: 'admin',
+                        password: 'Admin123456'
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    addResult(`Login successful: ${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    const errorData = await response.text();
+                    addResult(`Login failed: ${response.status} ${response.statusText} - ${errorData}`, 'error');
+                }
+            } catch (error) {
+                addResult(`Login failed: ${error.message}`, 'error');
+            }
+        }
+        
+        // Auto test on load
+        window.onload = function() {
+            addResult('Page loaded, ready for testing', 'info');
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,886 @@
+{
+	"info": {
+		"_postman_id": "task-service-collection-2025",
+		"name": "🗓️ Task Service API - Cô Tô",
+		"description": "Postman Collection cho Task Service (port 8084)\n\n## Cách dùng:\n1. Import collection này vào Postman\n2. Import Environment file kèm theo\n3. Chạy request \"Login\" trong folder Auth trước để lấy token\n4. Token tự động set vào biến {{accessToken}}, các request sau tự dùng\n\n## Thứ tự test:\n1. Health Check\n2. Login (lấy token)\n3. Create Task\n4. Get Tasks (list)\n5. Get Task by ID\n6. Update Task\n7. Move Task (Calendar drag-drop)\n8. Toggle Complete\n9. Calendar queries\n10. Delete Task",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "taskServiceUrl",
+			"value": "http://localhost:8084/api"
+		},
+		{
+			"key": "userServiceUrl",
+			"value": "http://localhost:8083/api"
+		},
+		{
+			"key": "accessToken",
+			"value": ""
+		},
+		{
+			"key": "taskId",
+			"value": ""
+		},
+		{
+			"key": "taskId2",
+			"value": ""
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{accessToken}}",
+				"type": "string"
+			}
+		]
+	},
+	"item": [
+		{
+			"name": "🔑 Auth (User Service)",
+			"description": "Đăng nhập qua user-service để lấy JWT token",
+			"item": [
+				{
+					"name": "Login (Admin)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const res = pm.response.json();",
+									"    ",
+									"    // Lưu token",
+									"    pm.collectionVariables.set('accessToken', res.accessToken);",
+									"    ",
+									"    // Lưu user info",
+									"    pm.collectionVariables.set('userId', res.userId);",
+									"    pm.collectionVariables.set('username', res.username);",
+									"    pm.collectionVariables.set('fullName', res.fullName);",
+									"    pm.collectionVariables.set('unitId', res.unitId);",
+									"    pm.collectionVariables.set('unitName', res.unitName);",
+									"    ",
+									"    pm.test('Login thành công', () => {",
+									"        pm.expect(res.accessToken).to.be.a('string');",
+									"        pm.expect(res.role).to.be.oneOf(['ADMIN', 'MANAGER']);",
+									"    });",
+									"    ",
+									"    pm.test('Có permissions', () => {",
+									"        pm.expect(res.permissions).to.be.an('array');",
+									"        pm.expect(res.permissions.length).to.be.greaterThan(0);",
+									"    });",
+									"    ",
+									"    console.log('✅ Token saved. User:', res.username, 'Role:', res.role);",
+									"} else {",
+									"    pm.test('Login failed: ' + pm.response.code, () => pm.expect.fail());",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"admin\",\n    \"password\": \"admin123\"\n}"
+						},
+						"url": {
+							"raw": "{{userServiceUrl}}/auth/login",
+							"host": ["{{userServiceUrl}}"],
+							"path": ["auth", "login"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "❤️ Health Check",
+			"item": [
+				{
+					"name": "Task Service Health",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Service is healthy', () => {",
+									"    pm.response.to.have.status(200);",
+									"    pm.expect(pm.response.text()).to.include('healthy');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "GET",
+						"url": {
+							"raw": "{{taskServiceUrl}}/tasks/health",
+							"host": ["{{taskServiceUrl}}"],
+							"path": ["tasks", "health"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "📝 CRUD - Tạo Task",
+			"item": [
+				{
+					"name": "Tạo task đầy đủ",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const res = pm.response.json();",
+									"    pm.collectionVariables.set('taskId', res.id);",
+									"    ",
+									"    pm.test('Task created - 201', () => {",
+									"        pm.response.to.have.status(201);",
+									"    });",
+									"    pm.test('Có ID', () => pm.expect(res.id).to.be.a('number'));",
+									"    pm.test('Title đúng', () => pm.expect(res.title).to.eql('Họp giao ban tuần'));",
+									"    pm.test('Priority đúng', () => pm.expect(res.priority).to.eql('HIGH'));",
+									"    pm.test('Category đúng', () => pm.expect(res.category).to.eql('meeting'));",
+									"    pm.test('Có creatorId', () => pm.expect(res.creatorId).to.be.a('number'));",
+									"    ",
+									"    console.log('✅ Task created ID:', res.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Họp giao ban tuần\",\n    \"description\": \"Tổng kết công việc tuần trước, phân công tuần mới\",\n    \"startDate\": \"{{$isoTimestamp}}\",\n    \"dueDate\": \"{{$isoTimestamp}}\",\n    \"startTime\": \"08:00:00\",\n    \"endTime\": \"09:30:00\",\n    \"status\": \"TODO\",\n    \"priority\": \"HIGH\",\n    \"category\": \"meeting\",\n    \"isAllDay\": false,\n    \"location\": \"Phòng họp A1\",\n    \"assigneeName\": \"Admin\",\n    \"unitName\": \"Phòng Hành chính\"\n}"
+						},
+						"url": {
+							"raw": "{{taskServiceUrl}}/tasks",
+							"host": ["{{taskServiceUrl}}"],
+							"path": ["tasks"]
+						}
+					}
+				},
+				{
+					"name": "Tạo task tối giản",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const res = pm.response.json();",
+									"    pm.collectionVariables.set('taskId2', res.id);",
+									"    ",
+									"    pm.test('Task created - 201', () => pm.response.to.have.status(201));",
+									"    pm.test('Default status = TODO', () => pm.expect(res.status).to.eql('TODO'));",
+									"    pm.test('Default priority = MEDIUM', () => pm.expect(res.priority).to.eql('MEDIUM'));",
+									"    pm.test('Default category = work', () => pm.expect(res.category).to.eql('work'));",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Viết báo cáo tháng\",\n    \"dueDate\": \"2025-04-15\"\n}"
+						},
+						"url": {
+							"raw": "{{taskServiceUrl}}/tasks",
+							"host": ["{{taskServiceUrl}}"],
+							"path": ["tasks"]
+						}
+					}
+				},
+				{
+					"name": "Tạo task thiếu title (expect 400)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Validation error - 400', () => {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"pm.test('Có validation errors', () => {",
+									"    const res = pm.response.json();",
+									"    pm.expect(res.details.validationErrors).to.be.an('array');",
+									"    pm.expect(res.details.validationErrors.length).to.be.greaterThan(0);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"description\": \"Task không có title\"\n}"
+						},
+						"url": {
+							"raw": "{{taskServiceUrl}}/tasks",
+							"host": ["{{taskServiceUrl}}"],
+							"path": ["tasks"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "📋 CRUD - Đọc Task",
+			"item": [
+				{
+					"name": "Lấy task theo ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status 200', () => pm.response.to.have.status(200));",
+									"pm.test('Có đầy đủ fields', () => {",
+									"    const res = pm.response.json();",
+									"    pm.expect(res).to.have.property('id');",
+									"    pm.expect(res).to.have.property('title');",
+									"    pm.expect(res).to.have.property('status');",
+									"    pm.expect(res).to.have.property('priority');",
+									"    pm.expect(res).to.have.property('creatorId');",
+									"    pm.expect(res).to.have.property('createdAt');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{taskServiceUrl}}/tasks/{{taskId}}",
+							"host": ["{{taskServiceUrl}}"],
+							"path": ["tasks", "{{taskId}}"]
+						}
+					}
+				},
+				{
+					"name": "Lấy task không tồn tại (expect 404)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Not found - 404', () => pm.response.to.have.status(404));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{taskServiceUrl}}/tasks/99999",
+							"host": ["{{taskServiceUrl}}"],
+							"path": ["tasks", "99999"]
+						}
+					}
+				},
+				{
+					"name": "Danh sách task (phân trang)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status 200', () => pm.response.to.have.status(200));",
+									"pm.test('Có Spring Page structure', () => {",
+									"    const res = pm.response.json();",
+									"    pm.expect(res).to.have.property('content');",
+									"    pm.expect(res).to.have.property('totalElements');",
+									"    pm.expect(res).to.have.property('totalPages');",
+									"    pm.expect(res).to.have.property('number');",
+									"    pm.expect(res).to.have.property('size');",
+									"    pm.expect(res.content).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{taskServiceUrl}}/tasks?page=0&size=10&sort=createdAt,desc",
+							"host": ["{{taskServiceUrl}}"],
+							"path": ["tasks"],
+							"query": [
+								{ "key": "page", "value": "0" },
+								{ "key": "size", "value": "10" },
+								{ "key": "sort", "value": "createdAt,desc" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Danh sách - filter status",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status 200', () => pm.response.to.have.status(200));",
+									"pm.test('Chỉ có task TODO', () => {",
+									"    const res = pm.response.json();",
+									"    res.content.forEach(task => {",
+									"        pm.expect(task.status).to.eql('TODO');",
+									"    });",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{taskServiceUrl}}/tasks?status=TODO&page=0&size=20",
+							"host": ["{{taskServiceUrl}}"],
+							"path": ["tasks"],
+							"query": [
+								{ "key": "status", "value": "TODO" },
+								{ "key": "page", "value": "0" },
+								{ "key": "size", "value": "20" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Danh sách - filter priority",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{taskServiceUrl}}/tasks?priority=HIGH&page=0&size=20",
+							"host": ["{{taskServiceUrl}}"],
+							"path": ["tasks"],
+							"query": [
+								{ "key": "priority", "value": "HIGH" },
+								{ "key": "page", "value": "0" },
+								{ "key": "size", "value": "20" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Task quá hạn",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status 200', () => pm.response.to.have.status(200));",
+									"pm.test('Response là array', () => {",
+									"    pm.expect(pm.response.json()).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{taskServiceUrl}}/tasks/overdue",
+							"host": ["{{taskServiceUrl}}"],
+							"path": ["tasks", "overdue"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "✏️ CRUD - Cập nhật Task",
+			"item": [
+				{
+					"name": "Update task",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status 200', () => pm.response.to.have.status(200));",
+									"pm.test('Title đã đổi', () => {",
+									"    pm.expect(pm.response.json().title).to.eql('Họp giao ban tuần [CẬP NHẬT]');",
+									"});",
+									"pm.test('Priority đã đổi', () => {",
+									"    pm.expect(pm.response.json().priority).to.eql('URGENT');",
+									"});",
+									"pm.test('Status đã đổi', () => {",
+									"    pm.expect(pm.response.json().status).to.eql('IN_PROGRESS');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Họp giao ban tuần [CẬP NHẬT]\",\n    \"description\": \"Đã cập nhật nội dung họp\",\n    \"priority\": \"URGENT\",\n    \"status\": \"IN_PROGRESS\",\n    \"location\": \"Phòng họp VIP\"\n}"
+						},
+						"url": {
+							"raw": "{{taskServiceUrl}}/tasks/{{taskId}}",
+							"host": ["{{taskServiceUrl}}"],
+							"path": ["tasks", "{{taskId}}"]
+						}
+					}
+				},
+				{
+					"name": "Update task không tồn tại (expect 404)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Not found - 404', () => pm.response.to.have.status(404));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Không tồn tại\"\n}"
+						},
+						"url": {
+							"raw": "{{taskServiceUrl}}/tasks/99999",
+							"host": ["{{taskServiceUrl}}"],
+							"path": ["tasks", "99999"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "🔄 Calendar Actions",
+			"item": [
+				{
+					"name": "Move task (kéo thả)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status 200', () => pm.response.to.have.status(200));",
+									"pm.test('Ngày đã đổi', () => {",
+									"    const res = pm.response.json();",
+									"    pm.expect(res.startDate).to.eql('2025-04-20');",
+									"    pm.expect(res.dueDate).to.eql('2025-04-21');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"newStartDate\": \"2025-04-20\",\n    \"newDueDate\": \"2025-04-21\",\n    \"newStartTime\": \"10:00:00\",\n    \"newEndTime\": \"11:30:00\"\n}"
+						},
+						"url": {
+							"raw": "{{taskServiceUrl}}/tasks/{{taskId}}/move",
+							"host": ["{{taskServiceUrl}}"],
+							"path": ["tasks", "{{taskId}}", "move"]
+						}
+					}
+				},
+				{
+					"name": "Toggle complete (đánh dấu hoàn thành)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status 200', () => pm.response.to.have.status(200));",
+									"pm.test('isCompleted = true', () => {",
+									"    const res = pm.response.json();",
+									"    pm.expect(res.isCompleted).to.eql(true);",
+									"    pm.expect(res.status).to.eql('COMPLETED');",
+									"    pm.expect(res.completedAt).to.not.be.null;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"url": {
+							"raw": "{{taskServiceUrl}}/tasks/{{taskId}}/toggle-complete",
+							"host": ["{{taskServiceUrl}}"],
+							"path": ["tasks", "{{taskId}}", "toggle-complete"]
+						}
+					}
+				},
+				{
+					"name": "Toggle complete lại (mở lại task)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status 200', () => pm.response.to.have.status(200));",
+									"pm.test('isCompleted = false', () => {",
+									"    const res = pm.response.json();",
+									"    pm.expect(res.isCompleted).to.eql(false);",
+									"    pm.expect(res.status).to.eql('TODO');",
+									"    pm.expect(res.completedAt).to.be.null;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"url": {
+							"raw": "{{taskServiceUrl}}/tasks/{{taskId}}/toggle-complete",
+							"host": ["{{taskServiceUrl}}"],
+							"path": ["tasks", "{{taskId}}", "toggle-complete"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "📅 Calendar Queries",
+			"item": [
+				{
+					"name": "Lịch cá nhân (tháng này)",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const now = new Date();",
+									"const year = now.getFullYear();",
+									"const month = String(now.getMonth() + 1).padStart(2, '0');",
+									"const lastDay = new Date(year, now.getMonth() + 1, 0).getDate();",
+									"",
+									"pm.collectionVariables.set('calStart', `${year}-${month}-01`);",
+									"pm.collectionVariables.set('calEnd', `${year}-${month}-${lastDay}`);"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status 200', () => pm.response.to.have.status(200));",
+									"pm.test('Response là array', () => {",
+									"    const res = pm.response.json();",
+									"    pm.expect(res).to.be.an('array');",
+									"    console.log('📅 Tasks in calendar:', res.length);",
+									"});",
+									"pm.test('Tasks có đủ fields cho Calendar render', () => {",
+									"    const res = pm.response.json();",
+									"    if (res.length > 0) {",
+									"        const t = res[0];",
+									"        pm.expect(t).to.have.property('id');",
+									"        pm.expect(t).to.have.property('title');",
+									"        pm.expect(t).to.have.property('priority');",
+									"        pm.expect(t).to.have.property('category');",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{taskServiceUrl}}/tasks/calendar?start={{calStart}}&end={{calEnd}}",
+							"host": ["{{taskServiceUrl}}"],
+							"path": ["tasks", "calendar"],
+							"query": [
+								{ "key": "start", "value": "{{calStart}}" },
+								{ "key": "end", "value": "{{calEnd}}" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Lịch cá nhân (tuần này)",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const now = new Date();",
+									"const day = now.getDay();",
+									"const monday = new Date(now);",
+									"monday.setDate(now.getDate() - day + (day === 0 ? -6 : 1));",
+									"const sunday = new Date(monday);",
+									"sunday.setDate(monday.getDate() + 6);",
+									"",
+									"const fmt = d => d.toISOString().split('T')[0];",
+									"pm.collectionVariables.set('weekStart', fmt(monday));",
+									"pm.collectionVariables.set('weekEnd', fmt(sunday));"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status 200', () => pm.response.to.have.status(200));",
+									"pm.test('Response là array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{taskServiceUrl}}/tasks/calendar?start={{weekStart}}&end={{weekEnd}}",
+							"host": ["{{taskServiceUrl}}"],
+							"path": ["tasks", "calendar"],
+							"query": [
+								{ "key": "start", "value": "{{weekStart}}" },
+								{ "key": "end", "value": "{{weekEnd}}" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Lịch toàn bộ (Admin only)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Admin: expect 200, Non-admin: expect 403",
+									"const code = pm.response.code;",
+									"pm.test('Response 200 or 403', () => {",
+									"    pm.expect(code).to.be.oneOf([200, 403]);",
+									"});",
+									"if (code === 200) {",
+									"    pm.test('Response là array', () => pm.expect(pm.response.json()).to.be.an('array'));",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{taskServiceUrl}}/tasks/calendar/all?start=2025-03-01&end=2025-03-31",
+							"host": ["{{taskServiceUrl}}"],
+							"path": ["tasks", "calendar", "all"],
+							"query": [
+								{ "key": "start", "value": "2025-03-01" },
+								{ "key": "end", "value": "2025-03-31" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Lịch theo đơn vị",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status 200', () => pm.response.to.have.status(200));",
+									"pm.test('Response là array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{taskServiceUrl}}/tasks/calendar/unit/1?start=2025-03-01&end=2025-04-30",
+							"host": ["{{taskServiceUrl}}"],
+							"path": ["tasks", "calendar", "unit", "1"],
+							"query": [
+								{ "key": "start", "value": "2025-03-01" },
+								{ "key": "end", "value": "2025-04-30" }
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "🗑️ CRUD - Xóa Task",
+			"item": [
+				{
+					"name": "Xóa task",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Deleted - 204', () => pm.response.to.have.status(204));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"url": {
+							"raw": "{{taskServiceUrl}}/tasks/{{taskId2}}",
+							"host": ["{{taskServiceUrl}}"],
+							"path": ["tasks", "{{taskId2}}"]
+						}
+					}
+				},
+				{
+					"name": "Verify đã xóa (expect 404)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Not found - 404', () => pm.response.to.have.status(404));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{taskServiceUrl}}/tasks/{{taskId2}}",
+							"host": ["{{taskServiceUrl}}"],
+							"path": ["tasks", "{{taskId2}}"]
+						}
+					}
+				},
+				{
+					"name": "Xóa task không tồn tại (expect 404)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Not found - 404', () => pm.response.to.have.status(404));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"url": {
+							"raw": "{{taskServiceUrl}}/tasks/99999",
+							"host": ["{{taskServiceUrl}}"],
+							"path": ["tasks", "99999"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "🔒 Auth Tests",
+			"item": [
+				{
+					"name": "Request không có token (expect 401)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Unauthorized - 401/403', () => {",
+									"    pm.expect(pm.response.code).to.be.oneOf([401, 403]);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "GET",
+						"url": {
+							"raw": "{{taskServiceUrl}}/tasks",
+							"host": ["{{taskServiceUrl}}"],
+							"path": ["tasks"]
+						}
+					}
+				},
+				{
+					"name": "Request với token sai (expect 401)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Unauthorized - 401/403', () => {",
+									"    pm.expect(pm.response.code).to.be.oneOf([401, 403]);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{ "key": "token", "value": "invalid.token.here", "type": "string" }]
+						},
+						"method": "GET",
+						"url": {
+							"raw": "{{taskServiceUrl}}/tasks",
+							"host": ["{{taskServiceUrl}}"],
+							"path": ["tasks"]
+						}
+					}
+				}
+			]
+		}
+	]
+}

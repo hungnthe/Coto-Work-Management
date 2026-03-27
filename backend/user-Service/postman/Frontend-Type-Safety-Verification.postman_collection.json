@@ -1,0 +1,246 @@
+{
+	"info": {
+		"_postman_id": "frontend-type-safety-verification",
+		"name": "Frontend Type Safety Verification",
+		"description": "Collection để verify backend JSON response format cho frontend TypeScript types",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Authentication",
+			"item": [
+				{
+					"name": "1.1 Health Check",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/auth/health",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "health"]
+						}
+					}
+				},
+				{
+					"name": "1.2 Login - Verify Response Format",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"const response = pm.response.json();",
+									"",
+									"// Save tokens for subsequent requests",
+									"pm.environment.set('accessToken', response.accessToken);",
+									"pm.environment.set('refreshToken', response.refreshToken);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				}
+			]
+		}
+	]
+}
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"admin\",\n  \"password\": \"Admin123456\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "login"]
+						},
+						"description": "**CRITICAL CHECKS:**\n- userId type (number vs string)\n- unitId type (number vs string)\n- role value (ADMIN, UNIT_MANAGER, STAFF, VIEWER)\n- permissions format (user:read vs USER_READ)\n- expiresIn type and nullable\n- tokenType value"
+					},
+					"response": []
+				},
+				{
+					"name": "1.3 Refresh Token - Verify Response Format",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"const response = pm.response.json();",
+									"pm.environment.set('accessToken', response.accessToken);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/refresh",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "refresh"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "2. User Operations",
+			"item": [
+				{
+					"name": "2.1 Get All Users - Verify Array Response",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"const response = pm.response.json();",
+									"pm.test('Response is array', function () {",
+									"    pm.expect(response).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/users",
+							"host": ["{{baseUrl}}"],
+							"path": ["users"]
+						},
+						"description": "**CRITICAL CHECKS:**\n- id type (number vs string)\n- unit.id type (number vs string)\n- unit.parentUnitId type (number vs string or null)\n- role value\n- isActive nullable\n- createdAt format (ISO 8601)\n- updatedAt format (ISO 8601)\n- phoneNumber nullable\n- avatarUrl nullable"
+					},
+					"response": []
+				},
+				{
+					"name": "2.2 Get User By ID - Verify Single Response",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/users/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["users", "1"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "3. Unit Operations",
+			"item": [
+				{
+					"name": "3.1 Get All Units - Verify Array Response",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"const response = pm.response.json();",
+									"pm.test('Response is array', function () {",
+									"    pm.expect(response).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/units",
+							"host": ["{{baseUrl}}"],
+							"path": ["units"]
+						},
+						"description": "**CRITICAL CHECKS:**\n- id type (number vs string)\n- parentUnitId type (number vs string or null)\n- isActive nullable\n- createdAt format (ISO 8601)\n- updatedAt format (ISO 8601)\n- description nullable\n- address nullable\n- phoneNumber nullable"
+					},
+					"response": []
+				},
+				{
+					"name": "3.2 Get Unit By ID - Verify Single Response",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});"

@@ -1,12 +1,5 @@
 # ==================== DOCUMENTATION & SPECS ====================
-# Kiro documentation and specs
-.kiro/
-*.md
-README.md
-HELP.md
-API_TEST_POSTMAN.md
-QUICK_START.md
-SYSTEM_COMMANDS.md
+
 
 # ==================== TEST FILES ====================
 # Java test files
@@ -27,7 +20,6 @@ test-*.sh
 **/*.spec.ts
 **/*.spec.tsx
 **/tests/
-**/test/
 **/__tests__/
 
 # ==================== BUILD & DEPENDENCIES ====================
@@ -46,8 +38,6 @@ test-*.sh
 **/npm-debug.log*
 **/yarn-debug.log*
 **/yarn-error.log*
-**/package-lock.json
-**/yarn.lock
 
 # ==================== IDE & EDITOR ====================
 # VS Code
@@ -105,8 +95,6 @@ test-*.sh
 
 # ==================== DOCKER & DEPLOYMENT ====================
 # Docker
-**/Dockerfile
-**/docker-compose*.yml
 **/.dockerignore
 
 # ==================== CONFIGURATION ====================

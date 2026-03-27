@@ -1,160 +1,107 @@
-import React, { useState } from 'react';
-import { AuthProvider } from './contexts/AuthContext';
-import ProtectedRoute from './components/auth/ProtectedRoute';
-import Header from './components/layout/Header';
-import Sidebar from './components/layout/Sidebar';
-import UserList from './components/users/UserList';
-import UserForm from './components/users/UserForm';
-import UserDetail from './components/users/UserDetail';
-import UserProfile from './components/users/UserProfile';
-import UnitList from './components/units/UnitList';
-import TestComponent from './components/test/TestComponent';
-import './App.css';
+    // src/App.jsx
+// ★ Chỉ thêm 2 dòng so với App.jsx gốc:
+//   1. import NotificationPage
+//   2. <Route path="/notifications" element={<NotificationPage />} />
 
-function App() {
-  const [activeSection, setActiveSection] = useState('test'); // Start with test component
-  const [currentView, setCurrentView] = useState('list'); // list, form, detail
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [selectedUnit, setSelectedUnit] = useState(null);
+import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 
-  const handleUserSelect = (user) => {
-    setSelectedUser(user);
-    setCurrentView('detail');
-  };
+// Layout
+import AdminLayout from './components/layout/AdminLayout/AdminLayout.jsx';
+import ClientLayout from './components/layout/ClientLayout/ClientLayout.jsx';
 
-  const handleCreateUser = () => {
-    setSelectedUser(null);
-    setCurrentView('form');
-  };
+// Pages (Client)
+import ClientLoginPage from './pages/ClientLoginPage.jsx';
+import HomePage from './pages/HomePage.jsx';
+import ProfilePage from './pages/ProfilePage';
+import TaskManagementPage from './pages/TaskManagementPage';
+import NotificationPage from './pages/NotificationPage'; // ★ THÊM
 
-  const handleEditUser = (user) => {
-    setSelectedUser(user);
-    setCurrentView('form');
-  };
+// Pages (Admin)
+import AdminLoginPage from './pages/AdminLoginPage.jsx';
+import AdminDashboard from './pages/Admin/AdminDashboard';
+import UserList from './pages/Admin/UserList';
+import CreateUser from './pages/Admin/CreateUser';
+import UnitManagementPage from './pages/Admin/UnitManagementPage';
+import UserDetailPage     from './pages/Admin/UserDetailPage';
 
-  const handleUserSave = (user) => {
-    setCurrentView('list');
-    setSelectedUser(null);
-  };
-
-  const handleCancel = () => {
-    setCurrentView('list');
-    setSelectedUser(null);
-    setSelectedUnit(null);
-  };
-
-  const handleUnitSelect = (unit) => {
-    setSelectedUnit(unit);
-    setCurrentView('detail');
-  };
-
-  const handleCreateUnit = () => {
-    setSelectedUnit(null);
-    setCurrentView('form');
-  };
-
-  const handleEditUnit = (unit) => {
-    setSelectedUnit(unit);
-    setCurrentView('form');
-  };
-
-  const renderContent = () => {
-    switch (activeSection) {
-      case 'test':
-        return <TestComponent />;
-      case 'users':
-        switch (currentView) {
-          case 'form':
-            return (
-              <UserForm
-                user={selectedUser}
-                onSave={handleUserSave}
-                onCancel={handleCancel}
-              />
-            );
-          case 'detail':
-            return (
-              <UserDetail
-                user={selectedUser}
-                onEdit={() => handleEditUser(selectedUser)}
-                onClose={handleCancel}
-              />
-            );
-          default:
-            return (
-              <UserList
-                onUserSelect={handleUserSelect}
-                onCreateUser={handleCreateUser}
-                onEditUser={handleEditUser}
-              />
-            );
-        }
-      case 'units':
-        return (
-          <UnitList
-            onUnitSelect={handleUnitSelect}
-            onCreateUnit={handleCreateUnit}
-            onEditUnit={handleEditUnit}
-          />
-        );
-      case 'profile':
-        return <UserProfile />;
-      default:
-        return (
-          <div className="text-center py-12">
-            <h2 className="text-2xl font-bold text-gray-900">
-              Chọn một mục từ menu bên trái
-            </h2>
-          </div>
-        );
-    }
-  };
-
-  // For testing, show the test component without authentication
-  if (activeSection === 'test') {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="bg-white shadow-sm border-b border-gray-200 p-4">
-          <div className="flex justify-between items-center">
-            <h1 className="text-xl font-semibold text-gray-900">
-              User Service Frontend - Test Mode
-            </h1>
-            <button
-              onClick={() => setActiveSection('users')}
-              className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
-            >
-              Switch to App Mode
-            </button>
-          </div>
+// ── Protected routes (giữ nguyên) ────────────────────────────
+const ProtectedRoute = () => {
+    const { isAuthenticated, loading } = useAuth();
+    if (loading) return (
+        <div className="flex h-screen items-center justify-center">
+            <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-4" />
+                <p className="text-gray-500">Đang tải...</p>
+            </div>
         </div>
-        <TestComponent />
-      </div>
     );
-  }
+    return isAuthenticated ? <Outlet /> : <Navigate to="/login" replace />;
+};
 
-  return (
-    <AuthProvider>
-      <ProtectedRoute>
-        <div className="min-h-screen bg-gray-50">
-          <Header />
-          <div className="flex">
-            <Sidebar 
-              activeSection={activeSection} 
-              onSectionChange={(section) => {
-                setActiveSection(section);
-                setCurrentView('list');
-                setSelectedUser(null);
-                setSelectedUnit(null);
-              }} 
-            />
-            <main className="flex-1 p-6">
-              {renderContent()}
-            </main>
-          </div>
+const AdminProtectedRoute = () => {
+    const { isAuthenticated, hasRole, loading } = useAuth();
+    if (loading) return (
+        <div className="flex h-screen items-center justify-center">
+            <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-4" />
+                <p className="text-gray-500">Đang tải...</p>
+            </div>
         </div>
-      </ProtectedRoute>
-    </AuthProvider>
-  );
+    );
+    if (!isAuthenticated) return <Navigate to="/admin/login" replace />;
+    if (!hasRole('ADMIN') && !hasRole('MANAGER')) return <Navigate to="/" replace />;
+    return <Outlet />;
+};
+
+const PublicRoute = ({ children, redirectTo = '/' }) => {
+    const { isAuthenticated, hasRole, loading } = useAuth();
+    if (loading) return null;
+    if (isAuthenticated) {
+        if (hasRole('ADMIN') || hasRole('MANAGER')) return <Navigate to="/admin" replace />;
+        return <Navigate to={redirectTo} replace />;
+    }
+    return children;
+};
+
+// ── App ───────────────────────────────────────────────────────
+function App() {
+    return (
+        <AuthProvider>
+            <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+                <Routes>
+
+                    {/* Login */}
+                    <Route path="/login" element={<PublicRoute><ClientLoginPage /></PublicRoute>} />
+                    <Route path="/admin/login" element={<PublicRoute redirectTo="/admin"><AdminLoginPage /></PublicRoute>} />
+
+                    {/* Client routes */}
+                    <Route element={<ProtectedRoute />}>
+                        <Route element={<ClientLayout />}>
+                            <Route path="/"              element={<HomePage />} />
+                            <Route path="/profile"       element={<ProfilePage />} />
+                            <Route path="/tasks"         element={<TaskManagementPage />} />
+                            <Route path="/notifications" element={<NotificationPage />} /> {/* ★ THÊM */}
+                        </Route>
+                    </Route>
+
+                    {/* Admin routes */}
+                    <Route element={<AdminProtectedRoute />}>
+                        <Route element={<AdminLayout />}>
+                            <Route path="/admin"              element={<AdminDashboard />} />
+                            <Route path="/admin/users"        element={<UserList />} />
+                            <Route path="/admin/users/create" element={<CreateUser />} />
+                            <Route path="/admin/users/:id"    element={<UserDetailPage />} />
+                            <Route path="/admin/units"        element={<UnitManagementPage />} />
+                        </Route>
+                    </Route>
+
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+            </BrowserRouter>
+        </AuthProvider>
+    );
 }
 
 export default App;
